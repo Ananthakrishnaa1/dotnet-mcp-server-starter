@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddOpenApi();
 builder.Services.AddCommerceApplication();
 builder.Services.AddCommerceInMemoryData();
@@ -29,6 +31,8 @@ app.UseExceptionHandler(exceptionApp => exceptionApp.Run(async context =>
     await Results.Problem(problem.Detail, statusCode: problem.Status, title: problem.Title).ExecuteAsync(context);
 }));
 app.MapOpenApi();
+app.UseSwagger();
+app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "CommerceMcpDemo API v1"));
 app.MapControllers();
 app.Run();
 

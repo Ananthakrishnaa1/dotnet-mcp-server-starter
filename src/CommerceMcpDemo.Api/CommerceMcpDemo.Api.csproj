@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
     <ProjectReference Include="../CommerceMcpDemo.Application/CommerceMcpDemo.Application.csproj" />
     <ProjectReference Include="../CommerceMcpDemo.Infrastructure/CommerceMcpDemo.Infrastructure.csproj" />
   </ItemGroup>

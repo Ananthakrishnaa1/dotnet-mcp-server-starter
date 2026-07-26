@@ -47,4 +47,14 @@ public sealed class CommerceApiTests(WebApplicationFactory<Program> factory) : I
         var lookup = await client.GetAsync($"/api/customers/{customer?.Id}");
         Assert.Equal(HttpStatusCode.OK, lookup.StatusCode);
     }
+
+    /// <summary>Verifies Swagger JSON and the interactive Swagger UI are available.</summary>
+    [Fact]
+    public async Task SwaggerEndpointsAreAvailable()
+    {
+        var document = await client.GetAsync("/swagger/v1/swagger.json");
+        var ui = await client.GetAsync("/swagger/index.html");
+        Assert.Equal(HttpStatusCode.OK, document.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, ui.StatusCode);
+    }
 }

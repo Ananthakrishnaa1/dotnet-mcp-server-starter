@@ -29,7 +29,7 @@ Run the HTTP-only API with:
 scripts/start-api.sh
 ```
 
-OpenAPI is served at `/openapi/v1.json`. The API routes are `/api/customers`, `/api/products`, and `/api/orders`.
+OpenAPI is served at `/openapi/v1.json`. Swagger JSON is served at `/swagger/v1/swagger.json` and the interactive Swagger UI is at `/swagger`. The API routes are `/api/customers`, `/api/products`, and `/api/orders`.
 
 ## Run MCP in VS Code
 

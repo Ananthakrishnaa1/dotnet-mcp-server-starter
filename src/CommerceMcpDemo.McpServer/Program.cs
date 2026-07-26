@@ -17,6 +17,8 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers().AddApplicationPart(typeof(CustomersController).Assembly);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddCommerceApplication();
 builder.Services.AddCommerceInMemoryData();
 builder.Services
@@ -38,5 +40,7 @@ app.UseExceptionHandler(exceptionApp => exceptionApp.Run(async context =>
     var detail = statusCode == StatusCodes.Status500InternalServerError ? "An unexpected error occurred." : exception?.Message;
     await Results.Problem(detail, statusCode: statusCode, title: title).ExecuteAsync(context);
 }));
+app.UseSwagger();
+app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "CommerceMcpDemo API v1"));
 app.MapControllers();
 await app.RunAsync();

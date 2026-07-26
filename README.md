@@ -1,4 +1,4 @@
-# 🤖 AI-Ready .NET Services with MCP
+# .NET Services with MCP
 
 > A practical .NET 10 MCP server starter for exposing application capabilities to AI assistants.
 

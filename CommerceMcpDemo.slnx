@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CommerceMcpDemo.Api/CommerceMcpDemo.Api.csproj" />
+    <Project Path="src/CommerceMcpDemo.Application/CommerceMcpDemo.Application.csproj" />
+    <Project Path="src/CommerceMcpDemo.Domain/CommerceMcpDemo.Domain.csproj" />
+    <Project Path="src/CommerceMcpDemo.Infrastructure/CommerceMcpDemo.Infrastructure.csproj" />
+    <Project Path="src/CommerceMcpDemo.McpServer/CommerceMcpDemo.McpServer.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CommerceMcpDemo.Api.IntegrationTests/CommerceMcpDemo.Api.IntegrationTests.csproj" />
+    <Project Path="tests/CommerceMcpDemo.Application.Tests/CommerceMcpDemo.Application.Tests.csproj" />
+    <Project Path="tests/CommerceMcpDemo.McpServer.Tests/CommerceMcpDemo.McpServer.Tests.csproj" />
+  </Folder>
+</Solution>

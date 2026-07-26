@@ -1,0 +1,15 @@
+{
+  "servers": {
+    "commerceDemo": {
+      "type": "stdio",
+      "command": "bash",
+      "args": [
+        "${workspaceFolder}/scripts/start-mcp.sh"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <ProjectReference Include="../CommerceMcpDemo.Application/CommerceMcpDemo.Application.csproj" />
+    <ProjectReference Include="../CommerceMcpDemo.Infrastructure/CommerceMcpDemo.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

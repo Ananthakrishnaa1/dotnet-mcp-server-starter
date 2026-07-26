@@ -1,0 +1,97 @@
+{
+  "tools": [
+    {
+      "name": "commerce_get_customer",
+      "description": "Gets one customer by its unique identifier.",
+      "operation": "getCustomer",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique customer identifier."
+          }
+        },
+        "required": ["customerId"]
+      }
+    },
+    {
+      "name": "commerce_search_customers",
+      "description": "Searches customers by name or email, optionally filtering by status.",
+      "operation": "searchCustomers",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Optional text contained in the customer name or email." },
+          "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Optional customer status filter." },
+          "page": { "type": "integer", "minimum": 1, "default": 1, "description": "One-based page number." },
+          "pageSize": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20, "description": "Results per page." }
+        }
+      }
+    },
+    {
+      "name": "commerce_get_product",
+      "description": "Gets one product by its unique identifier.",
+      "operation": "getProduct",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique product identifier."
+          }
+        },
+        "required": ["productId"]
+      }
+    },
+    {
+      "name": "commerce_search_products",
+      "description": "Searches products by name or SKU with active, stock, and price filters.",
+      "operation": "searchProducts",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Optional text contained in the product name or SKU." },
+          "isActive": { "type": "boolean", "default": true, "description": "Optional active-product filter." },
+          "inStock": { "type": "boolean", "description": "Optional in-stock filter." },
+          "maxPrice": { "type": "number", "minimum": 0, "description": "Optional inclusive maximum product price." },
+          "page": { "type": "integer", "minimum": 1, "default": 1, "description": "One-based page number." },
+          "pageSize": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20, "description": "Results per page." }
+        }
+      }
+    },
+    {
+      "name": "commerce_get_order",
+      "description": "Gets one order with its items by its unique identifier.",
+      "operation": "getOrder",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique order identifier."
+          }
+        },
+        "required": ["orderId"]
+      }
+    },
+    {
+      "name": "commerce_search_orders",
+      "description": "Searches orders by customer, status, and creation time.",
+      "operation": "searchOrders",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "customerId": { "type": "string", "format": "uuid", "description": "Optional customer identifier filter." },
+          "status": { "type": "string", "enum": ["Draft", "Confirmed", "Shipped", "Cancelled"], "description": "Optional order status filter." },
+          "createdAfterUtc": { "type": "string", "format": "date-time", "description": "Optional inclusive UTC creation timestamp lower bound." },
+          "page": { "type": "integer", "minimum": 1, "default": 1, "description": "One-based page number." },
+          "pageSize": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20, "description": "Results per page." }
+        }
+      }
+    }
+  ]
+}

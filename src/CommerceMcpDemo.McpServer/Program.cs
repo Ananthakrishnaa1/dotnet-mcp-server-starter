@@ -21,10 +21,25 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCommerceApplication();
 builder.Services.AddCommerceInMemoryData();
+var toolsFilePath = builder.Configuration["Commerce:ToolsFile"];
+if (string.IsNullOrWhiteSpace(toolsFilePath))
+{
+    toolsFilePath = Path.Combine(AppContext.BaseDirectory, "tools.json");
+}
+else if (!Path.IsPathFullyQualified(toolsFilePath))
+{
+    toolsFilePath = Path.GetFullPath(toolsFilePath, builder.Environment.ContentRootPath);
+}
+
+builder.Services.AddSingleton(new CommerceToolCatalog(toolsFilePath));
+builder.Services.AddSingleton<CommerceTools>();
 builder.Services
     .AddMcpServer()
     .WithStdioServerTransport()
-    .WithToolsFromAssembly(typeof(CustomerTools).Assembly);
+    .WithListToolsHandler((request, cancellationToken) =>
+        request.Services!.GetRequiredService<CommerceTools>().ListToolsAsync(cancellationToken))
+    .WithCallToolHandler((request, cancellationToken) =>
+        request.Services!.GetRequiredService<CommerceTools>().CallToolAsync(request, cancellationToken));
 
 var app = builder.Build();
 app.UseExceptionHandler(exceptionApp => exceptionApp.Run(async context =>

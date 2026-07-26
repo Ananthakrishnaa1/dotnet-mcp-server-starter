@@ -1,76 +1,97 @@
-using System.Reflection;
+using System.Text.Json;
 using CommerceMcpDemo.Application;
 using CommerceMcpDemo.Infrastructure;
 using CommerceMcpDemo.McpServer.Tools;
 using Microsoft.Extensions.DependencyInjection;
-using ModelContextProtocol.Server;
+using Microsoft.Extensions.Logging.Abstractions;
+using ModelContextProtocol.Protocol;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace CommerceMcpDemo.McpServer.Tests;
 
-/// <summary>Verifies MCP tool discovery, invocation, safe errors, and stdout hygiene.</summary>
+/// <summary>Verifies JSON-configured MCP tool discovery, dispatch, safe errors, and stdout hygiene.</summary>
 public sealed class McpToolsTests
 {
-    /// <summary>Verifies exactly the six read-only tool names are marked for MCP assembly discovery.</summary>
+    /// <summary>Verifies tools.json exposes exactly the six intended read-only tools.</summary>
     [Fact]
-    public void ToolAttributesExposeOnlyExpectedReadTools()
+    public void JsonConfigurationExposesOnlyExpectedReadTools()
     {
-        var names = typeof(CustomerTools).Assembly.GetTypes()
-            .SelectMany(type => type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
-            .Select(method => method.GetCustomAttribute<McpServerToolAttribute>())
-            .Where(attribute => attribute is not null)
-            .Select(attribute => attribute!.Name ?? string.Empty)
-            .OrderBy(name => name)
-            .ToArray();
+        var names = CreateCatalog().GetEnabledTools().Select(tool => tool.Name).OrderBy(name => name).ToArray();
+
         Assert.Equal<string>(["commerce_get_customer", "commerce_get_order", "commerce_get_product", "commerce_search_customers", "commerce_search_orders", "commerce_search_products"], names);
         Assert.DoesNotContain(names, name => name.Contains("create", StringComparison.OrdinalIgnoreCase));
     }
 
-    /// <summary>Verifies a tool invokes the same application service used by another adapter in one host.</summary>
+    /// <summary>Verifies a configured tool invokes the same application service used by another adapter in one host.</summary>
     [Fact]
     public async Task ToolReadsDataFromSameInMemorySingletonAsApplicationService()
     {
         await using var provider = CreateProvider();
         var customers = provider.GetRequiredService<ICustomerService>();
         var created = await customers.CreateAsync(new CreateCustomerRequest("Shared Instance", "shared@example.test"), CancellationToken.None);
-        var tools = new CustomerTools(customers);
-        var result = await tools.GetCustomerAsync(created.Id, CancellationToken.None);
-        Assert.Equal(created.Email, result.Email);
+
+        var result = await CreateTools().InvokeAsync(
+            "commerce_get_customer",
+            new Dictionary<string, JsonElement> { ["customerId"] = JsonSerializer.SerializeToElement(created.Id) },
+            provider,
+            CancellationToken.None);
+
+        Assert.False(result.IsError ?? false);
+        Assert.Equal(created.Email, result.StructuredContent!.Value.GetProperty("email").GetString());
         Assert.Same(provider.GetRequiredService<HardcodedCommerceDataStore>(), provider.GetRequiredService<HardcodedCommerceDataStore>());
     }
 
-    /// <summary>Verifies a successful tool invocation returns a deterministic product.</summary>
+    /// <summary>Verifies a successful configured tool invocation returns a deterministic product.</summary>
     [Fact]
     public async Task GetProductToolReturnsSeededProduct()
     {
         await using var provider = CreateProvider();
-        var tools = new ProductTools(provider.GetRequiredService<IProductService>());
-        var product = await tools.GetProductAsync(Guid.Parse("10000000-0000-0000-0000-000000000001"), CancellationToken.None);
-        Assert.Equal("Aurora Lamp", product.Name);
+
+        var result = await CreateTools().InvokeAsync(
+            "commerce_get_product",
+            new Dictionary<string, JsonElement> { ["productId"] = JsonSerializer.SerializeToElement(Guid.Parse("10000000-0000-0000-0000-000000000001")) },
+            provider,
+            CancellationToken.None);
+
+        Assert.False(result.IsError ?? false);
+        Assert.Equal("Aurora Lamp", result.StructuredContent!.Value.GetProperty("name").GetString());
     }
 
-    /// <summary>Verifies invalid inputs are converted to a safe MCP-facing exception.</summary>
+    /// <summary>Verifies invalid inputs are converted to a safe MCP-facing result.</summary>
     [Fact]
-    public async Task SearchToolMapsValidationFailuresToSafeException()
+    public async Task SearchToolMapsValidationFailuresToSafeResult()
     {
         await using var provider = CreateProvider();
-        var tools = new ProductTools(provider.GetRequiredService<IProductService>());
-        var exception = await Assert.ThrowsAsync<SafeToolException>(() => tools.SearchProductsAsync(pageSize: 101));
-        Assert.Equal("Page size must be between 1 and 100.", exception.Message);
+
+        var result = await CreateTools().InvokeAsync(
+            "commerce_search_products",
+            new Dictionary<string, JsonElement> { ["pageSize"] = JsonSerializer.SerializeToElement(101) },
+            provider,
+            CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.Equal("Page size must be between 1 and 100.", GetText(result));
     }
 
-    /// <summary>Verifies unexpected internal exception text is never returned by a tool.</summary>
+    /// <summary>Verifies unexpected internal exception text is never returned by a configured tool.</summary>
     [Fact]
     public async Task ToolSanitizesUnexpectedExceptionText()
     {
-        var tools = new CustomerTools(new ThrowingCustomerService());
-        var exception = await Assert.ThrowsAsync<SafeToolException>(() => tools.GetCustomerAsync(Guid.NewGuid(), CancellationToken.None));
-        Assert.Equal("The commerce tool could not complete the request.", exception.Message);
-        Assert.DoesNotContain("secret", exception.Message, StringComparison.OrdinalIgnoreCase);
+        await using var provider = new ServiceCollection().AddSingleton<ICustomerService>(new ThrowingCustomerService()).BuildServiceProvider();
+
+        var result = await CreateTools().InvokeAsync(
+            "commerce_get_customer",
+            new Dictionary<string, JsonElement> { ["customerId"] = JsonSerializer.SerializeToElement(Guid.NewGuid()) },
+            provider,
+            CancellationToken.None);
+
+        Assert.True(result.IsError);
+        Assert.Equal("The commerce tool could not complete the request.", GetText(result));
+        Assert.DoesNotContain("secret", GetText(result), StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>Verifies a direct tool invocation does not write log data to stdout.</summary>
+    /// <summary>Verifies a direct configured tool invocation does not write log data to stdout.</summary>
     [Fact]
     public async Task ToolInvocationDoesNotWriteToStdout()
     {
@@ -80,15 +101,25 @@ public sealed class McpToolsTests
         try
         {
             Console.SetOut(writer);
-            var tools = new ProductTools(provider.GetRequiredService<IProductService>());
-            await tools.GetProductAsync(Guid.Parse("10000000-0000-0000-0000-000000000001"), CancellationToken.None);
+            await CreateTools().InvokeAsync(
+                "commerce_get_product",
+                new Dictionary<string, JsonElement> { ["productId"] = JsonSerializer.SerializeToElement(Guid.Parse("10000000-0000-0000-0000-000000000001")) },
+                provider,
+                CancellationToken.None);
         }
         finally
         {
             Console.SetOut(original);
         }
+
         Assert.Equal(string.Empty, writer.ToString());
     }
+
+    private static CommerceToolCatalog CreateCatalog() => new(Path.Combine(AppContext.BaseDirectory, "tools.json"));
+
+    private static CommerceTools CreateTools() => new(CreateCatalog(), NullLogger<CommerceTools>.Instance);
+
+    private static string GetText(CallToolResult result) => Assert.IsType<TextContentBlock>(Assert.Single(result.Content)).Text;
 
     /// <summary>Builds one MCP-ready service provider with its shared in-memory singleton.</summary>
     private static ServiceProvider CreateProvider() => new ServiceCollection().AddCommerceApplication().AddCommerceInMemoryData().BuildServiceProvider();

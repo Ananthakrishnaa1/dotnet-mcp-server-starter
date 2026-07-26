@@ -44,11 +44,11 @@ The store contains 10 customers, 20 products, and 15 orders with stable GUIDs. A
 ## Add an MCP tool
 
 1. Add an application-service operation and test it.
-2. Add a class marked `[McpServerToolType]` under `CommerceMcpDemo.McpServer/Tools`.
-3. Mark the read-only adapter method with `[McpServerTool(Name = "...")]` and `Description` attributes for the tool and each user input.
-4. Call the application service, use `McpToolGuard` for safe errors, and add tests.
+2. Add an allowlisted operation in `CommerceMcpDemo.McpServer/Tools/Tools.cs`; it must call an application-service interface and use `McpToolGuard` for safe errors.
+3. Add the MCP name, description, input JSON Schema, and operation name to `src/CommerceMcpDemo.McpServer/tools.json`.
+4. Add tests for the new operation and configuration.
 
-`WithToolsFromAssembly()` discovers the class automatically; `Program.cs` does not need an edit.
+`tools.json` controls which allowlisted operations are exposed, their MCP names, descriptions, schemas, and enablement. It cannot execute arbitrary methods or code. Restart the MCP server after changing the file so the startup build copies it to the executable output directory.
 
 ## Troubleshooting
 

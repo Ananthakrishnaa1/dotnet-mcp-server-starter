@@ -22,4 +22,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="../../src/CommerceMcpDemo.McpServer/tools.json" Link="tools.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

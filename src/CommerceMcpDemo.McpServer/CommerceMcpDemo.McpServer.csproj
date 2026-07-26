@@ -13,7 +13,12 @@
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <ProjectReference Include="../CommerceMcpDemo.Application/CommerceMcpDemo.Application.csproj" />
     <ProjectReference Include="../CommerceMcpDemo.Api/CommerceMcpDemo.Api.csproj" />
+    <ProjectReference Include="../CommerceMcpDemo.Domain/CommerceMcpDemo.Domain.csproj" />
     <ProjectReference Include="../CommerceMcpDemo.Infrastructure/CommerceMcpDemo.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="tools.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
